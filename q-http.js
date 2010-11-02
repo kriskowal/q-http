@@ -105,6 +105,8 @@ exports.Server = function (respond) {
         return listening.promise;
     };
 
+    self.nodeServer = server;
+
     return self;
 };
 
@@ -114,16 +116,45 @@ exports.Server = function (respond) {
  */
 exports.Request = function (_request) {
     var request = Object.create(exports.Request.prototype);
-    /*** {String} HTTP method, e.g., `"GET"` */
+    /*** {Array} HTTP version. (JSGI) */
+    request.version = _request.httpVersion.split(".").map(Math.floor);
+    /*** {String} HTTP method, e.g., `"GET"` (JSGI) */
     request.method = _request.method;
     /*** {String} path, starting with `"/"` */
     request.path = _request.url;
+    /*** {String} pathInfo, starting with `"/"`, the 
+     * portion of the path that has not yet
+     * been routed (JSGI) */
+    request.pathInfo = _request.url;
+    /*** {String} scriptName, the portion of the path that
+     * has already been routed (JSGI) */
+    request.scriptName = "";
+    /*** {String} (JSGI) */
+    request.scheme = "http";
+
+    var hostPort = _request.headers.host.split(":");
+    /*** {String} */
+    request.host = hostPort[0];
+    /*** {Number} */
+    request.port = +hostPort[1] || 80;
+
+    var socket = _request.socket;
+    /*** {String} */
+    request.remoteHost = socket.remoteAddress;
+    /*** {Number} */
+    request.remotePort = socket.remotePort;
+
+    /*** {String} url */
+    request.url = request.scheme + "://" + _request.headers.host + request.path;
     /*** A Q IO asynchronous text reader */
     request.body = IO.Reader(_request);
-    /*** {Object} HTTP headers */
+    /*** {Object} HTTP headers (JSGI)*/
     request.headers = _request.headers;
+    /*** The underlying Node request */
+    request.nodeRequest = _request;
     /*** The underlying Node TCP connection */
-    request.connection = _request.connection;
+    request.nodeConnection = _request.connection;
+
     return request;
 };
 

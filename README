@@ -16,13 +16,26 @@ The API
 
     Request:Object
 
-        method || "GET"
+        version:Array HTTP version
+        scheme:String e.g., "http"
+        method:String e.g., "GET"
         host:String
         port:Number
+        remoteHost:String
+        remotePort:Number
+        scriptName:String the routed portion
+            of the path, e.g., "" for the
+            root document
+        pathInfo:String the part of the path
+            that remains to be routed, e.g.,
+            "/" for the root document
+        path:String the full path, regardless of routing
+        url:String the full URL, regardless of routing
         headers:Object
         body*
             forEach(write(String*)):Undefined*
-        connection:NodeSocketConnection
+        nodeRequest
+        nodeConnection
 
     Response:Object
 

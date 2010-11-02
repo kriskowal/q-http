@@ -1,4 +1,14 @@
 
+0.0.2
+
+ - added pathInfo, scriptName, scheme, host, and port to Request
+   objects to approach JSGI 0.3 compliance.
+ - added remoteHost, remotePort, and url to Request objects
+ - added request.nodeRequest and request.nodeConnection
+ - removed request.connection. use request.nodeRequest.connection or
+   request.nodeConnection.
+ - added server.nodeServer link for low-level extension
+
 0.0.1
 
  - synced dependencies
