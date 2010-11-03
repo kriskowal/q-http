@@ -171,6 +171,11 @@ exports.Client = function (port, host) {
 
     var _client = HTTP.createClient(port, host);
 
+    var error = Q.defer();
+    _client.on("error", function (_error) {
+        error.resolve(_error);
+    });
+
     /***
      * Issues an HTTP request.  The request may be
      * any object that has `method`, `path`, `headers`
@@ -196,6 +201,7 @@ exports.Client = function (port, host) {
     self.request = function (request) {
         // host, port, method, path, headers, body
         var deferred = Q.defer();
+        Q.when(error.promise, deferred.reject);
         var _request = _client.request(
             request.method || 'GET',
             request.path || '/',
@@ -249,7 +255,8 @@ exports.request = function (request) {
  * status code is not exactly 200.  The reason for the
  * rejection is the full response object.
  */
-exports.read = function (url) {
+exports.read = function (url, options) {
+    options = options || {};
     url = URL.parse(url);
     return Q.when(exports.request({
         "host": url.hostname,

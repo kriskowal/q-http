@@ -1,4 +1,10 @@
 
+0.0.4
+
+ - fixed a flaw in the HTTP request where a refused
+   connection threw an exception instead of rejecting
+   all subsequent requests with the error as the reason.
+
 0.0.3
 
  - fixed a flaw in the HTTP request wrapper wherein it is
