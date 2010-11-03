@@ -1,4 +1,9 @@
 
+0.0.3
+
+ - fixed a flaw in the HTTP request wrapper wherein it is
+   assumed that a Host header was sent by the client.
+
 0.0.2
 
  - added pathInfo, scriptName, scheme, host, and port to Request

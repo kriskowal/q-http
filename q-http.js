@@ -132,11 +132,13 @@ exports.Request = function (_request) {
     /*** {String} (JSGI) */
     request.scheme = "http";
 
-    var hostPort = _request.headers.host.split(":");
-    /*** {String} */
-    request.host = hostPort[0];
-    /*** {Number} */
-    request.port = +hostPort[1] || 80;
+    if (_request.headers.host) {
+        var hostPort = _request.headers.host.split(":");
+        /*** {String} */
+        request.host = hostPort[0];
+        /*** {Number} */
+        request.port = +hostPort[1] || 80;
+    }
 
     var socket = _request.socket;
     /*** {String} */
