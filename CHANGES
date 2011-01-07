@@ -1,4 +1,8 @@
 
+0.0.5
+
+ - added "stopped" promise to servers
+
 0.0.4
 
  - fixed a flaw in the HTTP request where a refused

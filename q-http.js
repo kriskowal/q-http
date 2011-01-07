@@ -87,7 +87,7 @@ exports.Server = function (respond) {
         if (err) {
             listening.reject(err);
         } else {
-            listening.resolve();
+            listening.resolve(self);
         }
     });
     /***
@@ -104,6 +104,8 @@ exports.Server = function (respond) {
         server.listen(port >>> 0);
         return listening.promise;
     };
+
+    self.stopped = stopped.promise;
 
     self.nodeServer = server;
 
