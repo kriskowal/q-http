@@ -1,21 +1,20 @@
 
-0.0.5
+0.0.6
+ - added "host" header implicitly to request.read [#1 asutherland]
 
+0.0.5
  - added "stopped" promise to servers
 
 0.0.4
-
  - fixed a flaw in the HTTP request where a refused
    connection threw an exception instead of rejecting
    all subsequent requests with the error as the reason.
 
 0.0.3
-
  - fixed a flaw in the HTTP request wrapper wherein it is
    assumed that a Host header was sent by the client.
 
 0.0.2
-
  - added pathInfo, scriptName, scheme, host, and port to Request
    objects to approach JSGI 0.3 compliance.
  - added remoteHost, remotePort, and url to Request objects
@@ -25,6 +24,5 @@
  - added server.nodeServer link for low-level extension
 
 0.0.1
-
  - synced dependencies
 
