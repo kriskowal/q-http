@@ -257,15 +257,16 @@ exports.request = function (request) {
  * status code is not exactly 200.  The reason for the
  * rejection is the full response object.
  */
-exports.read = function (url, options) {
-    options = options || {};
+exports.read = function (url) {
     url = URL.parse(url);
     return Q.when(exports.request({
         "host": url.hostname,
         "port": url.port,
         "method": "GET",
         "path": (url.pathname || "") + (url.search || ""),
-        "headers": {}
+        "headers": {
+            "host": url.hostname
+        }
     }), function (response) {
         if (response.status !== 200)
             return Q.reject(response);
