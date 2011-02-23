@@ -1,4 +1,8 @@
 
+0.1.0
+ - added SSL support to HTTP requests
+ - removed the Client API, in accordance with Node
+
 0.0.6
  - added "host" header implicitly to request.read [#1 asutherland]
 

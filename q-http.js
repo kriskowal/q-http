@@ -7,6 +7,7 @@
 /*whatsupdoc*/
 
 var HTTP = require("http"); // node
+var HTTPS = require("https"); // node
 var URL = require("url"); // node
 var Q = require("q-util");
 var IO = require("q-io");
@@ -163,59 +164,38 @@ exports.Request = function (_request) {
 };
 
 /**
- * Creates an HTTP client for issuing requests to
- * the given host on the given port.
- * @param {Number} port
- * @param {String} host
+ * Issues an HTTP request.
+ *
+ * @param {Request {host, port, method, path, headers,
+ * body}} request (may be a promise)
+ * @returns {Promise * Response} promise for a response
  */
-exports.Client = function (port, host) {
-    var self = Object.create(exports.Client.prototype);
+exports.request = function (request) {
+    return Q.when(request, function (request) {
 
-    var _client = HTTP.createClient(port, host);
-
-    var error = Q.defer();
-    _client.on("error", function (_error) {
-        error.resolve(_error);
-    });
-
-    /***
-     * Issues an HTTP request.  The request may be
-     * any object that has `method`, `path`, `headers`
-     * and `body` properties.
-     *
-     * * `method` `String` is optional, defaults to `"GET"`.
-     * * `path` `String` is optional, defaults to `"/"`.
-     * * `headers` `Object` is optional, defaults to `{}`.
-     * * `body` is optional, defaults to `[]`.  Body must
-     *   be an object with a `forEach` method that accepts a
-     *   `write` callback.  `forEach` may return a promise,
-     *   and may send promises to `write`.  `body` may be a
-     *   promise.
-     *
-     * The Q HTTP `Server` responder receives a `Request`
-     * object that is suitable for `request`, and `request`
-     * returns a `Response` suitable for returning to the
-     * `Server`.
-     *
-     * @param {{method, path, headers, body}}
-     * @returns {Promise * Response}
-     */
-    self.request = function (request) {
-        // host, port, method, path, headers, body
         var deferred = Q.defer();
-        Q.when(error.promise, deferred.reject);
-        var _request = _client.request(
-            request.method || 'GET',
-            request.path || '/',
-            request.headers || {}
-        );
-        _request.on('response', function (_response) {
-            var response = exports.Response(_response);
-            deferred.resolve(response);
+        var ssl = request.ssl;
+        var http = ssl ? HTTPS : HTTP;
+        var _request = http.request({
+            "host": request.host,
+            "port": request.port || (ssl ? 443 : 80),
+            "path": request.path || "/",
+            "method": request.method || "GET",
+            "headers": request.headers || {}
+        }, function (_response) {
+            deferred.resolve(exports.Response(_response));
+            _response.on("error", function (error) {
+                // XXX find a better way to channel
+                // this into the response
+                console.warn(error && error.stack || error);
+                deferred.reject(error);
+            });
         });
+
         _request.on("error", function (error) {
             deferred.reject(error);
         });
+
         Q.when(request.body, function (body) {
             var end;
             if (body) {
@@ -227,23 +207,8 @@ exports.Client = function (port, host) {
                 _request.end();
             });
         });
+
         return deferred.promise;
-    };
-
-    return self;
-};
-
-/**
- * Issues an HTTP request.
- *
- * @param {Request {host, port, method, path, headers,
- * body}} request (may be a promise)
- * @returns {Promise * Response} promise for a response
- */
-exports.request = function (request) {
-    return Q.when(request, function (request) {
-        var client = exports.Client(request.port || 80, request.host);
-        return client.request(request);
     });
 };
 
@@ -259,9 +224,11 @@ exports.request = function (request) {
  */
 exports.read = function (url) {
     url = URL.parse(url);
+    var ssl = url.protocol === "https:";
     return Q.when(exports.request({
         "host": url.hostname,
         "port": url.port,
+        "ssl": ssl,
         "method": "GET",
         "path": (url.pathname || "") + (url.search || ""),
         "headers": {
