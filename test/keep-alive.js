@@ -1,6 +1,5 @@
 
-var SYS = require("sys");
-var Q = require("q-util");
+var Q = require("q");
 var HTTP = require("q-http");
 
 var request = {
@@ -27,17 +26,17 @@ var server = HTTP.Server(function () {
 
 Q.when(server.listen(8080), function () {
 
-    var client = HTTP.Client(8080, "localhost");
-
-    var done = Q.times(3, function () {
-        return Q.when(client.request(request), function (response) {
+    var done = [1,2,3].reduce(function (done) {
+        return Q.when(HTTP.request(request), function (response) {
             return Q.when(response.body, function (body) {
-                return body.forEach(SYS.puts);
+                return Q.when(body.forEach(function (chunk) {
+                    console.log(chunk.toString('utf-8'));
+                })).wait(done);
             });
         });
-    });
+    }, undefined);
 
-    Q.when(done, server.stop);
-
-}, Q.error);
+    return Q.when(done, server.stop);
+})
+.end();
 

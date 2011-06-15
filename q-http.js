@@ -9,7 +9,7 @@
 var HTTP = require("http"); // node
 var HTTPS = require("https"); // node
 var URL = require("url"); // node
-var Q = require("q-util");
+var Q = require("q");
 var IO = require("q-io");
 
 /**
@@ -50,8 +50,13 @@ exports.Server = function (respond) {
                 ) {
                     _response.end(body[0]);
                 } else if (body) {
-                    var end = Q.forEach(body, function (chunk) {
-                        _response.write(chunk, "binary");
+                    var end;
+                    body.forEach(function (chunk) {
+                        end = Q.when(end, function () {
+                            return Q.when(chunk, function (chunk) {
+                                _response.write(chunk, "binary");
+                            });
+                        });
                     });
                     return Q.when(end, function () {
                         _response.end();
@@ -199,8 +204,12 @@ exports.request = function (request) {
         Q.when(request.body, function (body) {
             var end;
             if (body) {
-                end = Q.forEach(body, function (chunk) {
-                    _request.write(chunk, request.charset);
+                body.forEach(function (chunk) {
+                    end = Q.when(end, function () {
+                        return Q.when(chunk, function (chunk) {
+                            _request.write(chunk, request.charset);
+                        });
+                    });
                 });
             }
             Q.when(end, function () {

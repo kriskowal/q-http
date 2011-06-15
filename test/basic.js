@@ -1,5 +1,4 @@
 
-var SYS = require("sys");
 var Q = require("q");
 var HTTP = require("q-http");
 
@@ -28,9 +27,12 @@ var server = HTTP.Server(function () {
 Q.when(server.listen(8080), function () {
     return Q.when(HTTP.request(request), function (response) {
         return Q.when(response.body, function (body) {
-            var done = body.forEach(SYS.puts);
+            var done = body.forEach(function (chunk) {
+                console.log(chunk.toString("utf-8"));
+            });
             Q.when(done, server.stop);
         });
     });
-}, Q.error);
+})
+.end();
 
