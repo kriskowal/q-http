@@ -25,6 +25,7 @@ var server = HTTP.Server(function () {
 });
 
 Q.when(server.listen(8080), function () {
+    console.log("Listening on", server.port);
     return Q.when(HTTP.request(request), function (response) {
         return Q.when(response.body, function (body) {
             var done = body.forEach(function (chunk) {

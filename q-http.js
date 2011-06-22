@@ -26,46 +26,65 @@ exports.Server = function (respond) {
     var self = Object.create(exports.Server.prototype);
 
     var server = HTTP.createServer(function (_request, _response) {
-        var request = exports.Request(_request);
+        var request = exports.ServerRequest(_request);
+        var response = exports.ServerResponse(_response);
 
         var closed = Q.defer();
-        _request.connection.on("close", function (error, value) {
-            if (error)
+        _request.on("end", function (error, value) {
+            if (error) {
                 closed.reject(error);
-            else
+            } else {
                 closed.resolve(value);
+            }
         });
 
-        Q.when(respond(request), function (response) {
+        Q.when(respond(request, response), function (response) {
+            if (!response)
+                return;
+
             _response.writeHead(response.status, response.headers);
 
-            if (response.onClose)
-                Q.when(closed, response.onClose);
+            if (response.onclose || response.onClose)
+                Q.when(closed, response.onclose || response.onClose);
 
             return Q.when(response.body, function (body) {
+                var length;
                 if (
                     Array.isArray(body) &&
-                    body.length === 1 &&
-                    typeof body[0] === "string"
+                    (length = body.length > 0) &&
+                    body.every(function (chunk) {
+                        return typeof chunk === "string"
+                    })
                 ) {
-                    _response.end(body[0]);
+                    body.forEach(function (chunk, i) {
+                        if (i < length - 1) {
+                            _response.write(chunk, response.charset);
+                        } else {
+                            _response.end(chunk, response.charset);
+                        }
+                    });
                 } else if (body) {
                     var end;
-                    body.forEach(function (chunk) {
+                    var done = body.forEach(function (chunk) {
                         end = Q.when(end, function () {
                             return Q.when(chunk, function (chunk) {
-                                _response.write(chunk, "binary");
+                                _response.write(chunk, response.charset);
                             });
                         });
                     });
-                    return Q.when(end, function () {
-                        _response.end();
+                    return Q.when(done, function () {
+                        return Q.when(end, function () {
+                            _response.end();
+                        });
                     });
                 } else {
                     _response.end();
                 }
             });
-        });
+
+        })
+        .end();
+
     });
 
     var stopped = Q.defer();
@@ -96,6 +115,7 @@ exports.Server = function (respond) {
             listening.resolve(self);
         }
     });
+
     /***
      * Starts the server, listening on the given port
      * @param {Number} port
@@ -103,17 +123,20 @@ exports.Server = function (respond) {
      * resolve when the server is ready to receive
      * connections
      */
-    self.listen = function (port) {
-        if (!listening)
-            throw new Error("A server cannot be restarted or " +
-            "started on a new port");
-        server.listen(port >>> 0);
+    self.listen = function (port, host) {
+        if (typeof server.port !== "undefined")
+            return Q.reject(new Error("A server cannot be restarted or " +
+            "started on a new port"));
+        self.port = port >>> 0;
+        self.host = '' + host;
+        server.listen(self.port);
         return listening.promise;
     };
 
     self.stopped = stopped.promise;
 
-    self.nodeServer = server;
+    self.node = server;
+    self.nodeServer = server; // Deprecated
 
     return self;
 };
@@ -122,8 +145,8 @@ exports.Server = function (respond) {
  * A wrapper for a Node HTTP Request, as received by
  * the Q HTTP Server, suitable for use by the Q HTTP Client.
  */
-exports.Request = function (_request) {
-    var request = Object.create(exports.Request.prototype);
+exports.ServerRequest = function (_request) {
+    var request = Object.create(_request);
     /*** {Array} HTTP version. (JSGI) */
     request.version = _request.httpVersion.split(".").map(Math.floor);
     /*** {String} HTTP method, e.g., `"GET"` (JSGI) */
@@ -161,11 +184,19 @@ exports.Request = function (_request) {
     /*** {Object} HTTP headers (JSGI)*/
     request.headers = _request.headers;
     /*** The underlying Node request */
-    request.nodeRequest = _request;
+    request.node = _request;
+    request.nodeRequest = _request; // Deprecated
     /*** The underlying Node TCP connection */
     request.nodeConnection = _request.connection;
 
     return request;
+};
+
+exports.ServerResponse = function (_response) {
+    var response = Object.create(_response);
+    response.node = _response;
+    response.nodeResponse = _response; // Deprecated
+    return response;
 };
 
 /**
@@ -178,6 +209,22 @@ exports.Request = function (_request) {
 exports.request = function (request) {
     return Q.when(request, function (request) {
 
+        if (typeof request === "string") {
+            request = {
+                url: request
+            };
+        }
+        if (request.url) {
+            var url = URL.parse(request.url);
+            request.host = url.hostname;
+            request.port = url.port;
+            request.ssl = url.protocol === "https:";
+            request.method = request.method || "GET";
+            request.path = (url.pathname || "") + (url.search || "");
+            request.headers = request.headers || {};
+            request.headers.host = url.hostname; // FIXME name consistency
+        }
+
         var deferred = Q.defer();
         var ssl = request.ssl;
         var http = ssl ? HTTPS : HTTP;
@@ -188,9 +235,9 @@ exports.request = function (request) {
             "method": request.method || "GET",
             "headers": request.headers || {}
         }, function (_response) {
-            deferred.resolve(exports.Response(_response));
+            deferred.resolve(exports.ClientResponse(_response));
             _response.on("error", function (error) {
-                // XXX find a better way to channel
+                // TODO find a better way to channel
                 // this into the response
                 console.warn(error && error.stack || error);
                 deferred.reject(error);
@@ -202,9 +249,9 @@ exports.request = function (request) {
         });
 
         Q.when(request.body, function (body) {
-            var end;
+            var end, done;
             if (body) {
-                body.forEach(function (chunk) {
+                done = body.forEach(function (chunk) {
                     end = Q.when(end, function () {
                         return Q.when(chunk, function (chunk) {
                             _request.write(chunk, request.charset);
@@ -212,8 +259,10 @@ exports.request = function (request) {
                     });
                 });
             }
-            Q.when(end, function () {
-                _request.end();
+            return Q.when(end, function () {
+                return Q.when(done, function () {
+                    _request.end();
+                });
             });
         });
 
@@ -231,21 +280,11 @@ exports.request = function (request) {
  * status code is not exactly 200.  The reason for the
  * rejection is the full response object.
  */
-exports.read = function (url) {
-    url = URL.parse(url);
-    var ssl = url.protocol === "https:";
-    return Q.when(exports.request({
-        "host": url.hostname,
-        "port": url.port,
-        "ssl": ssl,
-        "method": "GET",
-        "path": (url.pathname || "") + (url.search || ""),
-        "headers": {
-            "host": url.hostname
-        }
-    }), function (response) {
-        if (response.status !== 200)
+exports.read = function (request) {
+    return Q.when(exports.request(request), function (response) {
+        if (response.status !== 200) {
             return Q.reject(response);
+        }
         return Q.when(response.body, function (body) {
             return body.read();
         });
@@ -258,8 +297,8 @@ exports.read = function (url) {
  * by the Q HTTP Client API, suitable for use by the
  * Q HTTP Server API.
  */
-exports.Response = function (_response) {
-    var response = Object.create(exports.Response.prototype);
+exports.ClientResponse = function (_response) {
+    var response = Object.create(exports.ClientResponse.prototype);
     /*** {Number} HTTP status code */
     response.status = _response.statusCode;
     /*** HTTP version */
@@ -270,6 +309,9 @@ exports.Response = function (_response) {
      * A Q IO asynchronous text reader.
      */
     response.body = IO.Reader(_response);
+    response.node = _response;
+    response.nodeResponse = _response; // Deprecated
+    response.nodeConnection = _response.connection; // Deprecated
     return response;
 };
 

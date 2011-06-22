@@ -6,16 +6,24 @@ through the specification to ensure this.
 The API
 
     Server(respond(request):Response*)
-        listen(port:Number):Undefined*
+        listen(port:Number):Server*
         stop():Undefined*
 
-    Client(port:Number, host:String)
-        request(request:Request):Response*
-
+    read(url:String):String
+    read(request:Request):String
+    request(url:String):Response*
     request(request:Request):Response*
 
-    Request:Object
+    {Client,Server}Request:Object
 
+        url:String the full URL, regardless of routing
+        path:String the full path, regardless of routing
+        scriptName:String the routed portion
+            of the path, e.g., "" for the
+            root document
+        pathInfo:String the part of the path
+            that remains to be routed, e.g.,
+            "/" for the root document
         version:Array HTTP version
         scheme:String e.g., "http"
         method:String e.g., "GET"
@@ -23,34 +31,25 @@ The API
         port:Number
         remoteHost:String
         remotePort:Number
-        scriptName:String the routed portion
-            of the path, e.g., "" for the
-            root document
-        pathInfo:String the part of the path
-            that remains to be routed, e.g.,
-            "/" for the root document
-        path:String the full path, regardless of routing
-        url:String the full URL, regardless of routing
         headers:Object
         body*
             forEach(write(String*)):Undefined*
-        nodeRequest
-        nodeConnection
+        node the wrapped Node request object
 
-    Response:Object
+    {Client,Server}Response:Object
 
         status:Number
         headers:Object
         body*
             forEach(write(String*)):Undefined*
-        onClose:Function?
+        onclose:Function?
+        node the wrapped Node response object
 
 Conventions
 
     `*` indicates that a value may be a promise
     `?` indicates optional
-    `||` indicates a default
 
-Copyright 2009, 2010 Kristopher Michael Kowal
+Copyright 2009, 2010, 2011 Kristopher Michael Kowal
 MIT License (enclosed)
 

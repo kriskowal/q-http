@@ -1,4 +1,16 @@
 
+0.1.2
+ - Forwarding wrapped response object in addition to request to HTTP
+   request responder "applications".
+ - Extended the ``read`` and ``request`` APIs such that URL strings
+   can be provided for either, or request objects with URL strings to
+   populate all missing properties.
+ - Renamed (temporary alias) ``onClose`` ``onclose``
+ - Fixed memory leak of closed connection listeners.
+ - Separated ``{Client,Server}{Request,Response}``
+ - Added uniform .node properties to all wrappers.
+ - Deprecated all .node* properties.
+
 0.1.0
  - added SSL support to HTTP requests
  - removed the Client API, in accordance with Node
