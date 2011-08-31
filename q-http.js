@@ -308,10 +308,12 @@ exports.ClientResponse = function (_response) {
     /***
      * A Q IO asynchronous text reader.
      */
-    response.body = IO.Reader(_response);
     response.node = _response;
     response.nodeResponse = _response; // Deprecated
     response.nodeConnection = _response.connection; // Deprecated
-    return response;
+    return Q.when(IO.Reader(_response), function (body) {
+        response.body = body;
+        return response;
+    });
 };
 
