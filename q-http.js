@@ -38,52 +38,54 @@ exports.Server = function (respond) {
             }
         });
 
-        Q.when(respond(request, response), function (response) {
-            if (!response)
-                return;
+        Q.when(request, function (request) {
+            Q.when(respond(request, response), function (response) {
+                if (!response)
+                    return;
 
-            _response.writeHead(response.status, response.headers);
+                _response.writeHead(response.status, response.headers);
 
-            if (response.onclose || response.onClose)
-                Q.when(closed, response.onclose || response.onClose);
+                if (response.onclose || response.onClose)
+                    Q.when(closed, response.onclose || response.onClose);
 
-            return Q.when(response.body, function (body) {
-                var length;
-                if (
-                    Array.isArray(body) &&
-                    (length = body.length > 0) &&
-                    body.every(function (chunk) {
-                        return typeof chunk === "string"
-                    })
-                ) {
-                    body.forEach(function (chunk, i) {
-                        if (i < length - 1) {
-                            _response.write(chunk, response.charset);
-                        } else {
-                            _response.end(chunk, response.charset);
-                        }
-                    });
-                } else if (body) {
-                    var end;
-                    var done = body.forEach(function (chunk) {
-                        end = Q.when(end, function () {
-                            return Q.when(chunk, function (chunk) {
+                return Q.when(response.body, function (body) {
+                    var length;
+                    if (
+                        Array.isArray(body) &&
+                        (length = body.length > 0) &&
+                        body.every(function (chunk) {
+                            return typeof chunk === "string"
+                        })
+                    ) {
+                        body.forEach(function (chunk, i) {
+                            if (i < length - 1) {
                                 _response.write(chunk, response.charset);
+                            } else {
+                                _response.end(chunk, response.charset);
+                            }
+                        });
+                    } else if (body) {
+                        var end;
+                        var done = body.forEach(function (chunk) {
+                            end = Q.when(end, function () {
+                                return Q.when(chunk, function (chunk) {
+                                    _response.write(chunk, response.charset);
+                                });
                             });
                         });
-                    });
-                    return Q.when(done, function () {
-                        return Q.when(end, function () {
-                            _response.end();
+                        return Q.when(done, function () {
+                            return Q.when(end, function () {
+                                _response.end();
+                            });
                         });
-                    });
-                } else {
-                    _response.end();
-                }
-            });
+                    } else {
+                        _response.end();
+                    }
+                });
 
+            })
         })
-        .end();
+        .end(); // should be .fail(self.emitter("error"))
 
     });
 
@@ -189,7 +191,10 @@ exports.ServerRequest = function (_request) {
     /*** The underlying Node TCP connection */
     request.nodeConnection = _request.connection;
 
-    return request;
+    return Q.when(request.body, function (body) {
+        request.body = body;
+        return request;
+    });
 };
 
 exports.ServerResponse = function (_response) {

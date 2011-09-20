@@ -1,4 +1,8 @@
 
+Next
+ - Changed request.body in ServerRequest from a promise to
+   fulfilled IO Reader with read and forEach.
+
 0.1.3
  - Synchronized with latest versions of dependencies.
  - Response body is no longer promised; response doesn't get
