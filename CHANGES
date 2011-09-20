@@ -1,5 +1,5 @@
 
-Next
+0.1.4
  - Changed request.body in ServerRequest from a promise to
    fulfilled IO Reader with read and forEach.
 
