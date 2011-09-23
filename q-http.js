@@ -285,14 +285,14 @@ exports.request = function (request) {
  * status code is not exactly 200.  The reason for the
  * rejection is the full response object.
  */
-exports.read = function (request) {
+exports.read = function (request, qualifier) {
+    qualifier = qualifier || function (response) {
+        return response.status === 200;
+    };
     return Q.when(exports.request(request), function (response) {
-        if (response.status !== 200) {
-            return Q.reject(response);
-        }
-        return Q.when(response.body, function (body) {
-            return body.read();
-        });
+        if (!qualifier(response))
+            throw new Error(response);
+        return Q.post(response.body, 'read', []);
     });
 };
 
