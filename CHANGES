@@ -1,5 +1,5 @@
 
-Next
+0.1.5
  - Added a response qualifier argument to ``read`` so that
    you can elect to accept responses with alternate status
    codes or restrict based on other criteria.
