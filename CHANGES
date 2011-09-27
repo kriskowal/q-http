@@ -1,4 +1,7 @@
 
+0.1.6
+ - Synchronized dependencies
+
 0.1.5
  - Added a response qualifier argument to ``read`` so that
    you can elect to accept responses with alternate status

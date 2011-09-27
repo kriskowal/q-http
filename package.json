@@ -1,6 +1,6 @@
 {
     "name": "q-http",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "Q promise based HTTP client and server interface",
     "homepage": "http://github.com/kriskowal/q-http/",
     "author": "Kris Kowal <kris@cixar.com> (http://github.com/kriskowal/)",
@@ -17,7 +17,7 @@
     "main": "q-http.js",
     "dependencies": {
         "q": "0.7.1",
-        "q-io": "0.0.8"
+        "q-io": "0.0.9"
     },
     "repository": {
         "type": "git",
