@@ -1,4 +1,7 @@
 
+0.1.7
+ - Synchronized dependencies to fix IO stream .close() bug.
+
 0.1.6
  - Synchronized dependencies
 
