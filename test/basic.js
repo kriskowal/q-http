@@ -20,20 +20,75 @@ var response = {
     ]
 };
 
-var server = HTTP.Server(function () {
-    return response;
-});
+exports['test basic'] = function (ASSERT, done) {
 
-Q.when(server.listen(8080), function () {
-    console.log("Listening on", server.port);
-    return Q.when(HTTP.request(request), function (response) {
-        return Q.when(response.body, function (body) {
-            var done = body.forEach(function (chunk) {
-                console.log(chunk.toString("utf-8"));
-            });
-            Q.when(done, server.stop);
-        });
+    var server = HTTP.Server(function () {
+        return response;
     });
-})
-.end();
+
+    Q.when(server.listen(8080), function () {
+        return Q.when(HTTP.request(request))
+        .then(function (response) {
+            ASSERT.ok(!Q.isPromise(response.body), "body is not a promise")
+            var acc = [];
+            return response.body.forEach(function (chunk) {
+                acc.push(chunk.toString("utf-8"));
+            }).then(function () {
+                ASSERT.equal(acc.join(""), "Hello, World!", "body is hello world");
+            });
+        })
+    })
+    .fin(server.stop)
+    .fin(done)
+    .fail(function (reason) {
+        ASSERT.ok(false, reason);
+    })
+
+}
+
+var deferredResponse = {
+    "status": 200,
+    "headers": {
+        "content-type": "text/plain; charset=utf-8"
+    },
+    "body": {
+        "forEach": function (write) {
+            var deferred = Q.defer();
+            write("Hello, World!");
+            setTimeout(function () {
+                deferred.resolve();
+            }, 100);
+            return deferred.promise;
+        }
+    }
+};
+
+exports['test deferred'] = function (ASSERT, done) {
+
+    var server = HTTP.Server(function () {
+        return deferredResponse;
+    });
+
+    Q.when(server.listen(8080), function () {
+        return Q.when(HTTP.request(request))
+        .then(function (response) {
+            var acc = [];
+            return response.body.forEach(function (chunk) {
+                acc.push(chunk.toString("utf-8"));
+            }).then(function () {
+                ASSERT.equal(acc.join(""), "Hello, World!", "body is hello world");
+            });
+        })
+    })
+    .fin(server.stop)
+    .fin(done)
+    .fail(function (reason) {
+        ASSERT.ok(false, reason);
+    })
+
+}
+
+if (module === require.main) {
+    require("test").run(exports);
+}
 
