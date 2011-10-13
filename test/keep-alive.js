@@ -1,6 +1,6 @@
 
 var Q = require("q");
-var HTTP = require("q-http");
+var HTTP = require("../q-http");
 
 var request = {
     "host": "localhost",

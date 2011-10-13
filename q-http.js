@@ -204,6 +204,42 @@ exports.ServerResponse = function (_response) {
     return response;
 };
 
+exports.normalizeRequest = function (request) {
+    if (typeof request === "string") {
+        request = {
+            url: request
+        };
+    }
+    if (request.url) {
+        var url = URL.parse(request.url);
+        request.host = url.hostname;
+        request.port = url.port;
+        request.ssl = url.protocol === "https:";
+        request.method = request.method || "GET";
+        request.path = (url.pathname || "") + (url.search || "");
+        request.headers = request.headers || {};
+        request.headers.host = url.hostname; // FIXME name consistency
+    }
+    return request;
+};
+
+exports.normalizeResponse = function (response) {
+    if (response === void 0) {
+        return;
+    }
+    if (typeof response == "string") {
+        response = [response];
+    }
+    if (response.forEach) {
+        response = {
+            status: 200,
+            headers: {},
+            body: response
+        }
+    }
+    return response;
+};
+
 /**
  * Issues an HTTP request.
  *
@@ -214,31 +250,29 @@ exports.ServerResponse = function (_response) {
 exports.request = function (request) {
     return Q.when(request, function (request) {
 
-        if (typeof request === "string") {
-            request = {
-                url: request
-            };
-        }
-        if (request.url) {
-            var url = URL.parse(request.url);
-            request.host = url.hostname;
-            request.port = url.port;
-            request.ssl = url.protocol === "https:";
-            request.method = request.method || "GET";
-            request.path = (url.pathname || "") + (url.search || "");
-            request.headers = request.headers || {};
-            request.headers.host = url.hostname; // FIXME name consistency
-        }
+        request = exports.normalizeRequest(request);
 
         var deferred = Q.defer();
         var ssl = request.ssl;
         var http = ssl ? HTTPS : HTTP;
+
+        var headers = request.headers || {};
+        headers.host = request.host + (
+            ssl ? (
+                request.port === 443 ? "" :
+                ":" + request.port
+            ) : (
+                request.port === 80 ? "" :
+                ":" + request.port
+            )
+        );
+
         var _request = http.request({
             "host": request.host,
             "port": request.port || (ssl ? 443 : 80),
             "path": request.path || "/",
             "method": request.method || "GET",
-            "headers": request.headers || {}
+            "headers": headers
         }, function (_response) {
             deferred.resolve(exports.ClientResponse(_response));
             _response.on("error", function (error) {
