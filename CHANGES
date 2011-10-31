@@ -1,4 +1,7 @@
 
+Next
+ - Fixed a bug in the automatically generated host header.
+
 0.1.8
  - Synchronized dependencies to fix thenable assimilation bug in Q.
  - Updated basic test to verify that the response body is a fulfilled

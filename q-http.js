@@ -257,15 +257,8 @@ exports.request = function (request) {
         var http = ssl ? HTTPS : HTTP;
 
         var headers = request.headers || {};
-        headers.host = request.host + (
-            ssl ? (
-                request.port === 443 ? "" :
-                ":" + request.port
-            ) : (
-                request.port === 80 ? "" :
-                ":" + request.port
-            )
-        );
+
+        headers.host = headers.host || request.host;
 
         var _request = http.request({
             "host": request.host,
