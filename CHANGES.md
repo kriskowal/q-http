@@ -1,8 +1,12 @@
 <!-- vim:ts=4:sts=4:sw=4:et:tw=60 -->
 
-# Next
+# 0.1.10
 
 -   Fixed a bug in the automatically generated host header.
+
+# 0.1.9
+
+-   Added ``normalizeRequest`` and ``normalizeResponse``.
 
 # 0.1.8
 
