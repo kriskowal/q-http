@@ -1,6 +1,6 @@
 <!-- vim:ts=4:sts=4:sw=4:et:tw=60 -->
 
-# Next
+# 0.1.11
 
 -   Fixed a problem with lost errors in JSGI applications.
 -   Fixed a problem with query strings in pathInfo.
