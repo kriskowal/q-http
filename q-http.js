@@ -39,7 +39,7 @@ exports.Server = function (respond) {
         });
 
         Q.when(request, function (request) {
-            Q.when(respond(request, response), function (response) {
+            return Q.when(respond(request, response), function (response) {
                 if (!response)
                     return;
 
@@ -158,7 +158,7 @@ exports.ServerRequest = function (_request) {
     /*** {String} pathInfo, starting with `"/"`, the 
      * portion of the path that has not yet
      * been routed (JSGI) */
-    request.pathInfo = _request.url;
+    request.pathInfo = URL.parse(_request.url).pathname;
     /*** {String} scriptName, the portion of the path that
      * has already been routed (JSGI) */
     request.scriptName = "";

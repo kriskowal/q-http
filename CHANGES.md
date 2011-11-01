@@ -1,5 +1,10 @@
 <!-- vim:ts=4:sts=4:sw=4:et:tw=60 -->
 
+# Next
+
+-   Fixed a problem with lost errors in JSGI applications.
+-   Fixed a problem with query strings in pathInfo.
+
 # 0.1.10
 
 -   Fixed a bug in the automatically generated host header.
