@@ -1,4 +1,3 @@
-
 /**
  * A promise-based Q-JSGI server and client API.
  * @module
@@ -52,7 +51,7 @@ exports.Server = function (respond) {
                     var length;
                     if (
                         Array.isArray(body) &&
-                        (length = body.length > 0) &&
+                        (length = body.length) &&
                         body.every(function (chunk) {
                             return typeof chunk === "string"
                         })
