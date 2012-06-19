@@ -124,13 +124,11 @@ exports.Server = function (respond) {
      * resolve when the server is ready to receive
      * connections
      */
-    self.listen = function (port, host) {
+    self.listen = function (/*...args*/) {
         if (typeof server.port !== "undefined")
             return Q.reject(new Error("A server cannot be restarted or " +
             "started on a new port"));
-        self.port = port >>> 0;
-        self.host = '' + host;
-        server.listen(self.port);
+        server.listen.apply(server, arguments);
         return listening.promise;
     };
 
@@ -141,6 +139,22 @@ exports.Server = function (respond) {
 
     return self;
 };
+
+Object.defineProperties(exports.Server, {
+
+    port: {
+        get: function () {
+            return this.node.port;
+        }
+    },
+
+    host: {
+        get: function () {
+            return this.node.host;
+        }
+    }
+
+});
 
 /**
  * A wrapper for a Node HTTP Request, as received by
@@ -154,7 +168,7 @@ exports.ServerRequest = function (_request) {
     request.method = _request.method;
     /*** {String} path, starting with `"/"` */
     request.path = _request.url;
-    /*** {String} pathInfo, starting with `"/"`, the 
+    /*** {String} pathInfo, starting with `"/"`, the
      * portion of the path that has not yet
      * been routed (JSGI) */
     request.pathInfo = URL.parse(_request.url).pathname;
