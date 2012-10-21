@@ -330,8 +330,11 @@ exports.read = function (request, qualifier) {
         return response.status === 200;
     };
     return Q.when(exports.request(request), function (response) {
-        if (!qualifier(response))
-            throw new Error(response);
+        if (!qualifier(response)){
+            var error = new Error("HTTP request failed with code " + response.status);
+            error.response = response;
+            throw error;
+        }
         return Q.post(response.body, 'read', []);
     });
 };
