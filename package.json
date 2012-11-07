@@ -16,7 +16,7 @@
     ],
     "main": "q-http.js",
     "dependencies": {
-        "q": "0.8.4",
+        "q": "0.8.10",
         "q-io": "0.0.13"
     },
     "devDependencies": {

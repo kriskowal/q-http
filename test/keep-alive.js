@@ -24,19 +24,18 @@ var server = HTTP.Server(function () {
     return response;
 });
 
-Q.when(server.listen(8080), function () {
+Q.done(server.listen(8080), function () {
 
     var done = [1,2,3].reduce(function (done) {
         return Q.when(HTTP.request(request), function (response) {
             return Q.when(response.body, function (body) {
-                return Q.when(body.forEach(function (chunk) {
+                return Q.all([body.forEach(function (chunk) {
                     console.log(chunk.toString('utf-8'));
-                })).wait(done);
+                }), done]);
             });
         });
     }, undefined);
 
     return Q.when(done, server.stop);
-})
-.end();
+});
 

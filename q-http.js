@@ -84,7 +84,7 @@ exports.Server = function (respond) {
 
             })
         })
-        .end(); // should be .fail(self.emitter("error"))
+        .done(); // should be .fail(self.emitter("error"))
 
     });
 

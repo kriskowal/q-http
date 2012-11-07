@@ -31,7 +31,7 @@ var server = HTTP.Server(function () {
     return response;
 });
 
-Q.when(server.listen(8080), function () {
+Q.done(server.listen(8080), function () {
     return Q.when(HTTP.request(request), function (response) {
         return Q.when(response.body, function (body) {
             var done = body.forEach(function (chunk) {
@@ -40,6 +40,5 @@ Q.when(server.listen(8080), function () {
             Q.when(done, server.stop);
         });
     });
-})
-.end();
+});
 
