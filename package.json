@@ -16,11 +16,14 @@
     ],
     "main": "q-http.js",
     "dependencies": {
-        "q": "0.8.10",
-        "q-io": "0.0.13"
+        "q": "0.8.x",
+        "q-io": "0.0.x"
     },
     "devDependencies": {
         "test": "0.4.1"
+    },
+    "scripts": {
+        "test": "node test/all.js"
     },
     "repository": {
         "type": "git",

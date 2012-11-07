@@ -2,31 +2,33 @@
 var Q = require("q");
 var HTTP = require("../q-http");
 
-var request = {
-    "host": "localhost",
-    "port": 8080,
-    "headers": {
-        "host": "localhost"
-    }
-};
-
-var response = {
-    "status": 200,
-    "headers": {
-        "content-type": "text/plain"
-    },
-    "body": [
-        "Hello, World!"
-    ]
-};
-
 exports['test basic'] = function (ASSERT, done) {
+
+    var response = {
+        "status": 200,
+        "headers": {
+            "content-type": "text/plain"
+        },
+        "body": [
+            "Hello, World!"
+        ]
+    };
 
     var server = HTTP.Server(function () {
         return response;
     });
 
-    Q.when(server.listen(8080), function () {
+    Q.when(server.listen(0), function (server) {
+        var port = server.node.address().port;
+
+        var request = {
+            "host": "localhost",
+            "port": port,
+            "headers": {
+                "host": "localhost"
+            }
+        };
+
         return Q.when(HTTP.request(request))
         .then(function (response) {
             ASSERT.ok(!Q.isPromise(response.body), "body is not a promise")
@@ -46,30 +48,40 @@ exports['test basic'] = function (ASSERT, done) {
 
 }
 
-var deferredResponse = {
-    "status": 200,
-    "headers": {
-        "content-type": "text/plain; charset=utf-8"
-    },
-    "body": {
-        "forEach": function (write) {
-            var deferred = Q.defer();
-            write("Hello, World!");
-            setTimeout(function () {
-                deferred.resolve();
-            }, 100);
-            return deferred.promise;
-        }
-    }
-};
-
 exports['test deferred'] = function (ASSERT, done) {
 
+    var response = {
+        "status": 200,
+        "headers": {
+            "content-type": "text/plain; charset=utf-8"
+        },
+        "body": {
+            "forEach": function (write) {
+                var deferred = Q.defer();
+                write("Hello, World!");
+                setTimeout(function () {
+                    deferred.resolve();
+                }, 100);
+                return deferred.promise;
+            }
+        }
+    };
+
     var server = HTTP.Server(function () {
-        return deferredResponse;
+        return response;
     });
 
-    Q.when(server.listen(8080), function () {
+    Q.when(server.listen(0), function (server) {
+        var port = server.node.address().port;
+
+        var request = {
+            "host": "localhost",
+            "port": port,
+            "headers": {
+                "host": "localhost"
+            }
+        };
+
         return Q.when(HTTP.request(request))
         .then(function (response) {
             var acc = [];
