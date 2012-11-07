@@ -1,6 +1,6 @@
 {
     "name": "q-http",
-    "version": "0.1.15",
+    "version": "0.1.16",
     "description": "Q promise based HTTP client and server interface",
     "homepage": "http://github.com/kriskowal/q-http/",
     "author": "Kris Kowal <kris@cixar.com> (http://github.com/kriskowal/)",
